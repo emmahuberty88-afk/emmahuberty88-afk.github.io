@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../../../Downloads/assessment-files/media"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "ica"
+	}
+}
