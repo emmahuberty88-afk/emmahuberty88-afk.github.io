@@ -1,0 +1,38 @@
+<div class="grid">
+  <div>One</div>
+  <div>Two</div>
+  <div>Three</div>
+  <div>Four</div>
+  <p> hey</p>
+</div>
+<style>
+body {
+  font: 1.2em / 1.5 sans-serif;
+}
+
+p{
+    background-color:red;
+    height: 250px;
+    width: 250px;
+}
+
+@media screen and(min-width:600px) {
+    p{
+        background-color: green;
+    }
+}
+
+.grid > * {
+  background-color: #4d7298;
+  border: 2px solid #77a6b6;
+  border-radius: 0.5em;
+  color: white;
+  padding: 0.5em;
+}
+
+.grid {
+display:grid;
+grid-template-columns: 1fr 1fr 1fr 1fr;
+grid-template-rows: 1fr 1fr;
+}
+</style>
