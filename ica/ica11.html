@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>
+  <label for="custom-name">Enter custom name:</label>
+  <input id="custom-name" type="text" placeholder="" />
+</div>
+
+<fieldset>
+  <legend>Choose locale:</legend>
+  <label for="us"><strong>US</strong></label>
+  <input id="us" type="radio" name="uk-us" value="us" checked />
+  <label for="uk"><strong>UK</strong></label
+  ><input id="uk" type="radio" name="uk-us" value="uk" />
+</fieldset>
+
+<div>
+  <button class="generate">Generate random story</button>
+</div>
+
+<p class="story"></p>
+<style>
+    #custom-name{
+        border-color: brown;
+    }
+    fieldset{
+        border-color: brown;
+        padding: 20px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        width: 250px;
+    }
+    label[for="custom-name"] {
+  color:brown;
+  font-family: Arial, Helvetica, sans-serif;
+    }
+    legend{
+        color: brown;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+    #custom-name{
+       color: brown;
+    }
+   label[for="us"] {
+  color: rgb(220, 26, 26);
+  font-size: 30px;
+    }
+    label[for="uk"] {
+    font-size: 30px;
+  color: rgb(0, 165, 55);
+    }
+    .generate{
+        background-color: brown;
+        color: white;
+        border-radius: 1rem;
+        padding: 5px;
+        border-color: brown;
+    }
+    .story{
+       width: 300px; 
+       color: brown;
+       font-family: Arial, Helvetica, sans-serif;
+    }
+</style>
+<script>
+// Complete variable definitions and random functions
+
+const customName = document.getElementById("custom-name");
+const generateBtn = document.querySelector(".generate");
+const story = document.querySelector(".story");
+
+function randomValueFromArray(array) {
+  const random = Math.floor(Math.random() * array.length);
+  return array[random];
+}
+
+// Raw text strings
+const characters = ["this one random chick","Michelle Obama","Dua Lipa"];
+
+const places = ["Church", "Paris", "Area 51"];
+
+const events = ["started shakin' it like Shakira", "decided the moon landing was fake", "eaten the last of my flippin peaches"];
+
+// Partial return random string function
+
+function returnRandomStoryString() {
+const randomCharacter=randomValueFromArray(characters);
+const randomPlace=randomValueFromArray(places);
+const randomEvent=randomValueFromArray(events);
+let storyText = `The sun was just setting on the horizon, and ${randomCharacter}'s stomach started grumbling, so she decided to go get some grub. On the way to her favorite restaurant, Panda Express, ${randomCharacter} stopped by ${randomPlace}. But by the time she had ${randomEvent}, the temperature had dropped by 94 degrees Fahrenheit, and Bob had already shut Panda Express down. So instead of curling up with some orange chicken, ${randomCharacter} took a 300 pound shit and went to bed. `
+  return storyText;
+}
+
+// Event listener and partial generate function definition
+
+generateBtn.addEventListener("click", generateStory);
+
+function generateStory() {
+
+    let newStory=returnRandomStoryString();
+
+  if (customName.value !== "") {
+    const name = customName.value;
+    newStory = newStory.replace("Bob",name);
+  }
+
+  if (document.getElementById("uk").checked) {
+    const weight = Math.round(300/14);
+    const temperature = Math.round((94-32)/1.8);
+    newStory = newStory.replace(" 300 pound"," "+weight+" stone");
+    newStory = newStory.replace("94 degrees Fahrenheit",temperature+" degrees Celcius");
+  }
+
+  // TODO: replace "" with the correct expression
+  story.textContent = newStory;
+  story.style.visibility = "visible";
+}
+</script>
+</body>
+</html>
+
+
