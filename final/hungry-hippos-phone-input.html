@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hungry Hungry Hippo Phone Number Input</title>
+
+<!-- Fonts: your Adobe Fonts (Typekit) kit.
+     The kit must include "bubblegum-pop-highlight" and "rival-sans" for these to show.
+     Sans-serif fallbacks are set in the CSS variables below. -->
+<link rel="stylesheet" href="https://use.typekit.net/rab7fwu.css">
+
+<!--
+  =====================================================================
+  QUICK MAP FOR YOUR JAVASCRIPT
+  =====================================================================
+  Buttons .......... #start-btn, #next-btn, #delete-btn
+  Digit slots ...... #phone-digits > .digit[data-index="0..9"]
+                     - active slot gets class .is-active (+ aria-current="true")
+                     - put the number in .digit__value
+                     - update .digit__label for screen readers ("Digit 1: 5")
+  Status text ...... #status (screen-reader announcements, also visible)
+  Game area ........ #game-area (position: relative; JS coordinates start here)
+  Balls ............ 26 .ball elements already sit inside #ball-pit at random
+                     spots. Each has its own start position:
+                       --m-left / --m-top  (percent, 400px layout)
+                       --d-left / --d-top  (percent, 1200px layout)
+                       --s                 (size multiplier)
+                     When Start is pressed, read each ball's position with
+                     getBoundingClientRect() and animate it with --ball-x / --ball-y.
+  Hippo ............ #hippo (move it by setting --hippo-x / --hippo-y).
+                     It holds two drawings: overhead (400px) and side view
+                     (1200px). CSS shows the right one.
+  Hippo mouth ...... #hippo-mouth (invisible box: use getBoundingClientRect()
+                     on it for collision checks)
+  Hippo belly ...... #collected-balls (append .ball--collected here;
+                     clone #collected-ball-template)
+  Return to start .. add class .is-returning to #hippo, then set
+                     --hippo-x / --hippo-y back to 0px (CSS animates it)
+
+  CSS custom properties JS can set:
+    #hippo ......... --hippo-x, --hippo-y   (px offsets from the start position)
+    .ball .......... --ball-x, --ball-y     (px offset added to its start spot)
+                     --s                    (size multiplier, e.g. 1.2)
+                     --ball-color           (or use classes .ball--1 ... .ball--6)
+
+  Reminders:
+  - Call event.preventDefault() on arrow keys or the page will scroll.
+  - Check window.matchMedia("(prefers-reduced-motion: reduce)") and keep
+    ball movement gentle or pause it when it matches.
+  - Update #status text whenever something important happens
+    (game started, ball caught, digit confirmed, digit deleted).
+  =====================================================================
+-->
+
+<style>
+/* ===================================================================
+   1. DESIGN TOKENS (from your design system file)
+   =================================================================== */
+:root {
+  /* Core palette */
+  --color-primary: #5A5A66;     /* charcoal */
+  --color-secondary: #EF476F;   /* pink */
+  --color-accent: #B3B7EE;      /* periwinkle */
+  --color-neutral: #FFEECF;     /* cream */
+  --color-highlight: #33998D;   /* teal */
+
+  /* Derived colors */
+  --color-background: var(--color-neutral);
+  --color-text-dark: var(--color-primary);
+  --color-text-light: var(--color-neutral);
+  --color-digit-bg: color-mix(in srgb, var(--color-accent) 35%, var(--color-neutral)); /* light purple square */
+  --color-baseline: color-mix(in srgb, var(--color-primary) 65%, var(--color-neutral)); /* gray line under digits */
+  --color-hippo-dark: color-mix(in srgb, var(--color-primary) 70%, black);
+  --color-eye: #2B2B33;
+  --color-mouth: color-mix(in srgb, var(--color-accent) 55%, var(--color-primary)); /* inside of the hippo mouth */
+  --color-mouth-deep: color-mix(in srgb, var(--color-mouth) 60%, var(--color-hippo-dark)); /* back of the mouth */
+
+  /* Ball pit colors: your palette plus yellow, blue and orange so it reads as a kids' ball pit */
+  --ball-1: #EF476F;
+  --ball-2: #B3B7EE;
+  --ball-3: #33998D;
+  --ball-4: #FFD166;
+  --ball-5: #4EA8DE;
+  --ball-6: #F78C6B;
+
+  /* Typography */
+  --font-primary: "bubblegum-pop-highlight", "Trebuchet MS", sans-serif;
+  --font-secondary: "rival-sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1.25rem;
+  --spacing-lg: 1.75rem;
+  --spacing-xl: 2.25rem;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Layout sizes: MOBILE (400px) values. Large-screen values are in section 9 */
+  --control-size: 2.75rem;          /* height of digit slots + Next/Delete boxes (44px) */
+  --digit-gap: 3px;
+  --digit-font-size: 1.15rem;
+  --hippo-w: 170px;                 /* hippo artwork size (overhead view, portrait) */
+  --hippo-h: 260px;
+  --hippo-tilt: 0deg;
+  --collected-ball-size: 1.1rem;
+  --ball-base: 2rem;                /* ball size before the per-ball --s multiplier */
+  /* Where things sit on the hippo drawing (percent of the drawing) */
+  --belly-left: 23%; --belly-top: 42%; --belly-w: 54%; --belly-h: 47%;
+  --mouth-left: 33%; --mouth-top: 3%; --mouth-w: 34%; --mouth-h: 10%;
+}
+
+/* ===================================================================
+   2. RESET + BASE
+   =================================================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+  background-color: var(--color-background);
+  color: var(--color-text-dark);
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--spacing-sm) 0.75rem var(--spacing-md);
+}
+
+.page {
+  max-width: 1200px;
+  min-height: calc(100vh - 2rem);
+  min-height: calc(100dvh - 2rem);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* Page title */
+.title {
+  font-family: var(--font-primary);
+  font-weight: 400;              /* the font has one weight; avoids a fake bold */
+  font-size: 1.75rem;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--color-primary);
+}
+
+/* Visually hidden, still read by screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Keyboard focus: visible on every interactive element */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--color-neutral);
+}
+
+/* ===================================================================
+   3. TOP BAR: start button + digit controls
+   Mobile: Start centered on its own row, controls row beneath (see sketch)
+   =================================================================== */
+.top-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s;
+}
+
+/* Start button (pink). Text is 24px so the cream-on-pink 3.16:1 passes WCAG "large text" (3:1) */
+.btn--start {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--color-secondary);
+  color: var(--color-text-light);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+}
+.btn--start:hover {
+  background-color: var(--color-primary);
+  border-color: var(--color-secondary);
+  transform: scale(1.05);
+}
+.btn--start:active {
+  background-color: var(--color-secondary);
+  transform: scale(0.95);
+}
+
+/* Next / Delete use the same look as Start (.btn--start).
+   400px: pink square with an icon (the text is still read by screen readers).
+   1200px: same pink button with its text visible (see section 7). */
+.btn--compact {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--control-size);
+  height: var(--control-size);
+  padding: 0;
+}
+.btn--compact svg { width: 60%; height: 60%; }
+.btn--compact .btn__text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* JS: set the disabled attribute (not a class) so it also blocks keyboard use */
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:disabled:hover { transform: none; }
+.btn--start:disabled:hover { background-color: var(--color-secondary); border-color: var(--color-primary); }
+
+/* ---------- Digit controls row: [Next] [digit slots] [Delete] ---------- */
+.digit-controls {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+  width: 100%;
+}
+
+/* ---------- Phone digit slots (3-3-4) ---------- */
+.phone-digits {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--digit-gap);
+  list-style: none;
+  padding-bottom: 0.75rem;   /* room for the gray baselines */
+}
+
+/* One light purple square per digit */
+.digit {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: var(--control-size);
+  display: grid;
+  place-items: center;
+  background-color: var(--color-digit-bg);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-primary);
+  font-size: var(--digit-font-size);
+  line-height: 1;
+  color: var(--color-text-dark);
+}
+
+/* Gray baseline directly below each square */
+.digit::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.5rem;
+  height: 3px;
+  border-radius: 2px;
+  background-color: var(--color-baseline);
+}
+
+/* JS: add .is-active to the digit currently being built */
+.digit.is-active { box-shadow: 0 0 0 3px var(--color-highlight); }
+.digit.is-active::after { background-color: var(--color-highlight); }
+
+/* Dash between number groups, sitting on the baseline row */
+.separator {
+  position: relative;
+  flex: 0 0 0.5rem;
+  height: var(--control-size);
+}
+.separator::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.5rem;
+  height: 3px;
+  border-radius: 2px;
+  background-color: var(--color-baseline);
+}
+
+/* ===================================================================
+   4. GAME AREA
+   =================================================================== */
+.game-area {
+  position: relative;
+  flex: 1;
+  min-height: 30rem;
+  overflow: hidden;          /* balls and hippo stay inside the frame */
+  background-color: var(--color-background);
+  border: 3px solid var(--color-accent);
+  border-radius: var(--radius-lg);
+}
+
+/* ===================================================================
+   5. BALL PIT (JS adds .ball elements here after Start is pressed)
+   =================================================================== */
+.ball-pit {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ball {
+  position: absolute;
+  /* Start spot: 400px layout by default, 1200px layout in section 7 */
+  left: var(--m-left, 0%);
+  top: var(--m-top, 0%);
+  width: calc(var(--ball-base) * var(--s, 1));
+  aspect-ratio: 1;
+  border-radius: 50%;
+  /* small white shine on top of the base color */
+  background:
+    radial-gradient(circle at 30% 30%, rgb(255 255 255 / 0.55) 0 12%, transparent 13%),
+    var(--ball-color, var(--ball-1));
+  /* JS: add motion here by setting --ball-x / --ball-y */
+  transform: translate(var(--ball-x, 0px), var(--ball-y, 0px));
+  will-change: transform;
+}
+.ball--1 { --ball-color: var(--ball-1); }
+.ball--2 { --ball-color: var(--ball-2); }
+.ball--3 { --ball-color: var(--ball-3); }
+.ball--4 { --ball-color: var(--ball-4); }
+.ball--5 { --ball-color: var(--ball-5); }
+.ball--6 { --ball-color: var(--ball-6); }
+
+/* ===================================================================
+   6. HIPPO
+   Structure: #hippo (moves) > .hippo__rotator (tilts) > drawings + mouth box + belly
+   400px: overhead view, facing up.  1200px: side view, tilted toward the middle.
+   =================================================================== */
+.hippo {
+  position: absolute;
+  width: var(--hippo-w);
+  height: var(--hippo-h);
+  /* 400px start position: bottom middle */
+  left: calc(50% - var(--hippo-w) / 2);
+  bottom: var(--spacing-sm);
+  /* JS moves the hippo by setting --hippo-x / --hippo-y */
+  transform: translate(var(--hippo-x, 0px), var(--hippo-y, 0px));
+}
+
+/* JS: add .is-returning while the hippo glides back to its start position */
+.hippo.is-returning { transition: transform 0.9s ease-in-out; }
+
+.hippo__rotator {
+  position: absolute;
+  inset: 0;
+  transform: rotate(var(--hippo-tilt));
+}
+
+.hippo__art { display: block; width: 100%; height: 100%; }
+.hippo__art--side { display: none; }   /* shown at 1200px */
+
+/* Hippo colors: gray body, periwinkle details */
+.hippo__skin { fill: var(--color-primary); }
+.hippo__skin-dark { fill: var(--color-hippo-dark); }
+.hippo__accent { fill: var(--color-accent); }
+.hippo__mouth-fill { fill: var(--color-mouth); }
+.hippo__mouth-deep { fill: var(--color-mouth-deep); }
+.hippo__tongue-light { fill: color-mix(in srgb, var(--color-accent) 60%, var(--color-neutral)); }
+.hippo__tooth { fill: var(--color-neutral); stroke: var(--color-neutral); stroke-width: 2; stroke-linejoin: round; }
+.hippo__eye { fill: var(--color-eye); }
+.hippo__shine { fill: var(--color-neutral); }
+
+/* Invisible box over the open mouth: use it for catching balls.
+   To see it while testing, uncomment the outline line. */
+.hippo__mouth {
+  position: absolute;
+  left: var(--mouth-left);
+  top: var(--mouth-top);
+  width: var(--mouth-w);
+  height: var(--mouth-h);
+  /* outline: 2px dashed var(--color-secondary); */
+}
+
+/* Belly: caught balls appear here, uncolored with a periwinkle outline.
+   Sized so 9 balls fit comfortably (about 24 fit at 400px, 18 at 1200px). */
+.collected-balls {
+  position: absolute;
+  left: var(--belly-left);
+  top: var(--belly-top);
+  width: var(--belly-w);
+  height: var(--belly-h);
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+}
+.ball--collected {
+  width: var(--collected-ball-size);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: none;
+  border: 2px solid var(--color-accent);
+}
+
+/* ===================================================================
+   7. LARGE SCREEN (1200px design): min-width 48rem (768px) and up
+   =================================================================== */
+@media (min-width: 48rem) {
+  :root {
+    --control-size: 4rem;           /* 64px */
+    --digit-gap: 0.5rem;
+    --digit-font-size: 2rem;
+    --hippo-w: 300px;               /* side view, landscape */
+    --hippo-h: 200px;
+    --hippo-tilt: -20deg;           /* faces up and to the right, toward the middle */
+    --collected-ball-size: 1.25rem;
+    --ball-base: 2.75rem;
+    --belly-left: 11%; --belly-top: 36%; --belly-w: 56%; --belly-h: 44%;
+    --mouth-left: 78%; --mouth-top: 42%; --mouth-w: 20%; --mouth-h: 28%;
+  }
+
+  body { padding: var(--spacing-md) var(--spacing-xl) var(--spacing-lg); }
+  .page { gap: var(--spacing-md); min-height: calc(100vh - 3.5rem); min-height: calc(100dvh - 3.5rem); }
+  .title { font-size: 3rem; text-align: left; }
+
+  /* Start button top left, digit controls top right */
+  .top-bar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+  .btn--start { min-height: var(--control-size); }
+  .digit-controls { width: auto; gap: var(--spacing-md); }
+  .phone-digits { flex: none; padding-bottom: 1rem; }
+  .digit { flex: none; width: 3.25rem; }
+  .digit::after, .separator::after { bottom: -0.75rem; }
+  .separator { flex: 0 0 1rem; }
+
+  /* Next / Delete: show the text instead of the icon */
+  .btn--compact { display: inline-flex; align-items: center; justify-content: center; width: auto; padding: 0 var(--spacing-md); }
+  .btn--compact svg { display: none; }
+  .btn--compact .btn__text { position: static; width: auto; height: auto; margin: 0; overflow: visible; clip: auto; white-space: normal; }
+
+  .game-area { min-height: 32rem; }
+  .ball { left: var(--d-left, 0%); top: var(--d-top, 0%); }
+
+  /* Hippo starts bottom left (side view) and faces toward the middle */
+  .hippo { left: 3rem; bottom: 3rem; }
+  .hippo__art--side { display: block; }
+  .hippo__art--top { display: none; }
+}
+
+/* ===================================================================
+   8. USER PREFERENCES
+   =================================================================== */
+/* Remove CSS transitions for people who ask for less motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* Windows high contrast mode: make sure the digit slots keep an outline */
+@media (forced-colors: active) {
+  .digit, .btn--start { border: 2px solid CanvasText; }
+  .digit.is-active { outline: 3px solid Highlight; }
+}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+  <h1 class="title">Hungry Hungry Hippo Phone Number Input</h1>
+
+  <!-- ===============================================================
+       TOP BAR: Start button (left) + Next / digit slots / Delete (right)
+       =============================================================== -->
+  <header class="top-bar">
+
+    <!-- JS: click to start the game and drop in the balls.
+         Suggestion: change the text to "Restart" after the first press. -->
+    <button id="start-btn" class="btn btn--start" type="button">Start!</button>
+
+    <div class="digit-controls" role="group" aria-labelledby="phone-label">
+      <span id="phone-label" class="sr-only">Phone number controls</span>
+
+      <!-- JS: confirms the caught balls as this digit and moves to the next slot.
+           Starts disabled until a ball has been caught. -->
+      <button id="next-btn" class="btn btn--start btn--compact" type="button" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M5 12h14M13 6l6 6-6 6"/>
+        </svg>
+        <span class="btn__text">Next<span class="sr-only"> digit</span></span>
+      </button>
+
+      <!-- JS: 10 slots grouped 3-3-4. Fill in the digit when "Next" is pressed. -->
+      <ol id="phone-digits" class="phone-digits" aria-label="Phone number, 10 digits">
+        <li class="digit is-active" data-index="0" aria-current="true"><span class="sr-only digit__label">Digit 1, empty</span><span class="digit__value" aria-hidden="true"></span></li>
+        <li class="digit" data-index="1"><span class="sr-only digit__label">Digit 2, empty</span><span class="digit__value" aria-hidden="true"></span></li>
+        <li class="digit" data-index="2"><span class="sr-only digit__label">Digit 3, empty</span><span class="digit__value" aria-hidden="true"></span></li>
+        <li class="separator" aria-hidden="true"></li>
+        <li class="digit" data-index="3"><span class="sr-only digit__label">Digit 4, empty</span><span class="digit__value" aria-hidden="true"></span></li>
+        <li class="digit" data-index="4"><span class="sr-only digit__label">Digit 5, empty</span><span class="digit__value" aria-hidden="true"></span></li>
+        <li class="digit" data-index="5"><span class="sr-only digit__label">Digit 6, empty</span><span class="digit__value" aria-hidden="true"></span></li>
+        <li class="separator" aria-hidden="true"></li>
+        <li class="digit" data-index="6"><span class="sr-only digit__label">Digit 7, empty</span><span class="digit__value" aria-hidden="true"></span></li>
+        <li class="digit" data-index="7"><span class="sr-only digit__label">Digit 8, empty</span><span class="digit__value" aria-hidden="true"></span></li>
+        <li class="digit" data-index="8"><span class="sr-only digit__label">Digit 9, empty</span><span class="digit__value" aria-hidden="true"></span></li>
+        <li class="digit" data-index="9"><span class="sr-only digit__label">Digit 10, empty</span><span class="digit__value" aria-hidden="true"></span></li>
+      </ol>
+
+      <!-- JS: removes one caught ball from the hippo's belly (and clears digits if you want) -->
+      <button id="delete-btn" class="btn btn--start btn--compact" type="button" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/>
+          <path d="M17 9l-6 6M11 9l6 6"/>
+        </svg>
+        <span class="btn__text">Delete<span class="sr-only"> a ball</span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===============================================================
+       MAIN: instructions, counters, game
+       =============================================================== -->
+  <main>
+    <!-- JS: write messages here. role="status" announces changes politely.
+         Examples: "Game started", "Caught a ball. 3 balls in the hippo." -->
+    <p id="status" class="status" role="status">Press Start, then use the arrow keys to move the hippo. Catch as many balls as the next digit of your phone number.</p>
+
+<!-- GAME AREA -->
+    <section id="game-area" class="game-area" aria-label="Game area">
+
+      <!-- JS: balls bounce around in here. Hidden from screen readers (purely visual).
+           They are already scattered at random spots. See the map at the top of the file. -->
+      <div id="ball-pit" class="ball-pit" aria-hidden="true">
+        <div class="ball ball--1" style="--m-left:79.7%;--m-top:39.8%;--d-left:60.4%;--d-top:49.2%;--s:1.21"></div>
+        <div class="ball ball--3" style="--m-left:10.8%;--m-top:27.0%;--d-left:14.6%;--d-top:5.8%;--s:1.23"></div>
+        <div class="ball ball--1" style="--m-left:10.5%;--m-top:67.0%;--d-left:61.2%;--d-top:79.1%;--s:1.12"></div>
+        <div class="ball ball--3" style="--m-left:60.6%;--m-top:6.3%;--d-left:43.0%;--d-top:60.7%;--s:1.06"></div>
+        <div class="ball ball--3" style="--m-left:84.5%;--m-top:79.2%;--d-left:64.2%;--d-top:58.6%;--s:1.11"></div>
+        <div class="ball ball--5" style="--m-left:16.1%;--m-top:4.2%;--d-left:68.8%;--d-top:75.3%;--s:0.76"></div>
+        <div class="ball ball--2" style="--m-left:46.9%;--m-top:7.7%;--d-left:77.8%;--d-top:71.8%;--s:0.97"></div>
+        <div class="ball ball--2" style="--m-left:18.8%;--m-top:22.1%;--d-left:37.6%;--d-top:65.5%;--s:0.76"></div>
+        <div class="ball ball--3" style="--m-left:5.5%;--m-top:39.7%;--d-left:74.7%;--d-top:48.3%;--s:0.88"></div>
+        <div class="ball ball--2" style="--m-left:41.0%;--m-top:25.0%;--d-left:54.9%;--d-top:33.2%;--s:1.19"></div>
+        <div class="ball ball--6" style="--m-left:29.2%;--m-top:21.1%;--d-left:51.4%;--d-top:51.1%;--s:0.81"></div>
+        <div class="ball ball--1" style="--m-left:27.0%;--m-top:8.5%;--d-left:85.4%;--d-top:72.5%;--s:1.1"></div>
+        <div class="ball ball--6" style="--m-left:73.3%;--m-top:33.5%;--d-left:63.4%;--d-top:33.7%;--s:1.1"></div>
+        <div class="ball ball--3" style="--m-left:82.5%;--m-top:69.9%;--d-left:42.9%;--d-top:21.2%;--s:1.28"></div>
+        <div class="ball ball--6" style="--m-left:3.0%;--m-top:19.6%;--d-left:54.0%;--d-top:75.7%;--s:0.86"></div>
+        <div class="ball ball--4" style="--m-left:9.1%;--m-top:52.7%;--d-left:24.2%;--d-top:3.9%;--s:0.89"></div>
+        <div class="ball ball--6" style="--m-left:67.6%;--m-top:24.3%;--d-left:19.8%;--d-top:16.4%;--s:0.76"></div>
+        <div class="ball ball--4" style="--m-left:69.2%;--m-top:17.0%;--d-left:78.2%;--d-top:55.1%;--s:1.04"></div>
+        <div class="ball ball--1" style="--m-left:73.9%;--m-top:53.7%;--d-left:39.7%;--d-top:73.4%;--s:0.85"></div>
+        <div class="ball ball--3" style="--m-left:11.3%;--m-top:81.2%;--d-left:76.1%;--d-top:33.4%;--s:1.18"></div>
+        <div class="ball ball--5" style="--m-left:38.0%;--m-top:11.2%;--d-left:51.4%;--d-top:28.0%;--s:1.13"></div>
+        <div class="ball ball--5" style="--m-left:52.5%;--m-top:26.2%;--d-left:72.5%;--d-top:70.0%;--s:1.03"></div>
+        <div class="ball ball--2" style="--m-left:17.6%;--m-top:59.9%;--d-left:26.0%;--d-top:16.4%;--s:0.97"></div>
+        <div class="ball ball--6" style="--m-left:79.1%;--m-top:19.1%;--d-left:20.8%;--d-top:35.7%;--s:1.25"></div>
+        <div class="ball ball--1" style="--m-left:17.6%;--m-top:32.1%;--d-left:54.9%;--d-top:42.0%;--s:0.98"></div>
+        <div class="ball ball--6" style="--m-left:84.4%;--m-top:54.9%;--d-left:84.5%;--d-top:38.7%;--s:0.96"></div>
+      </div>
+
+      <!-- Template JS can clone for each caught ball (shown inside the hippo) -->
+      <template id="collected-ball-template">
+        <div class="ball--collected"></div>
+      </template>
+
+      <!-- HIPPO -->
+      <div id="hippo" class="hippo" aria-hidden="true">
+        <div class="hippo__rotator">
+
+          <!-- Side view (1200px). Colors come from the CSS classes in section 6. -->
+          <svg class="hippo__art hippo__art--side" viewBox="0 0 300 200" focusable="false">
+            <!-- far legs -->
+            <rect class="hippo__skin-dark" x="94" y="142" width="34" height="46" rx="15"/>
+            <rect class="hippo__skin-dark" x="192" y="142" width="34" height="46" rx="15"/>
+            <!-- near legs -->
+            <rect class="hippo__skin" x="52" y="140" width="38" height="50" rx="17"/>
+            <rect class="hippo__skin" x="146" y="140" width="38" height="50" rx="17"/>
+            <!-- toenails -->
+            <g class="hippo__accent">
+              <ellipse cx="102" cy="186" rx="3.6" ry="4.6"/><ellipse cx="111" cy="187" rx="3.6" ry="4.6"/><ellipse cx="120" cy="186" rx="3.6" ry="4.6"/>
+              <ellipse cx="200" cy="186" rx="3.6" ry="4.6"/><ellipse cx="209" cy="187" rx="3.6" ry="4.6"/><ellipse cx="218" cy="186" rx="3.6" ry="4.6"/>
+              <ellipse cx="60" cy="188" rx="4" ry="5"/><ellipse cx="71" cy="189" rx="4" ry="5"/><ellipse cx="82" cy="188" rx="4" ry="5"/>
+              <ellipse cx="154" cy="188" rx="4" ry="5"/><ellipse cx="165" cy="189" rx="4" ry="5"/><ellipse cx="176" cy="188" rx="4" ry="5"/>
+            </g>
+            <!-- tail + body -->
+            <ellipse class="hippo__skin" cx="24" cy="96" rx="13" ry="9"/>
+            <ellipse class="hippo__skin" cx="125" cy="108" rx="105" ry="64"/>
+            <!-- belly (darker area where caught balls show) -->
+            <ellipse class="hippo__skin-dark" cx="118" cy="116" rx="84" ry="44"/>
+            <!-- ears -->
+            <ellipse class="hippo__skin" cx="206" cy="32" rx="14" ry="16"/>
+            <ellipse class="hippo__accent" cx="206" cy="33" rx="7" ry="9"/>
+            <ellipse class="hippo__skin" cx="238" cy="30" rx="14" ry="16"/>
+            <ellipse class="hippo__accent" cx="238" cy="31" rx="7" ry="9"/>
+            <!-- HEAD: one connected shape. Layers run back to front, so the skin outline
+                 (last path) covers the edges of the mouth parts that sit behind it. -->
+            <!-- 1. mouth inside (medium purple) and the deeper back of the mouth (darker) -->
+            <path class="hippo__mouth-fill" d="M236 82 L280 82 C274 100 282 116 292 124 L295 129 L282 149 C256 153 232 136 236 82 Z"/>
+            <path class="hippo__mouth-deep" d="M234 82 L252 85 C245 108 251 128 270 142 C246 148 230 128 234 82 Z"/>
+            <!-- 2. two teeth hanging from the upper jaw (rounded rectangles, same style as the phone hippo).
+                 Kept over the purple so they never sit on the cream background. -->
+            <rect class="hippo__tooth" x="248" y="80" width="9" height="18" rx="4.5"/>
+            <rect class="hippo__tooth" x="263" y="80" width="9" height="18" rx="4.5"/>
+            <!-- 3. tongue: a plump rounded shape with a lighter center, drawn last so it
+                 sits in front of every other layer inside the mouth -->
+            <path class="hippo__accent" d="M243 126 C243 111 262 105 278 111 C291 116 293 128 285 135 C274 146 251 148 245 138 C243 134 243 130 243 126 Z"/>
+            <path class="hippo__tongue-light" d="M252 125 C254 116 268 113 279 118 C281 125 274 132 263 133 C256 133 251 130 252 125 Z"/>
+            <!-- 4. skin outline: forehead, raised snout, upper lip, open mouth,
+                 big scooped lower jaw, chin and throat in one closed path -->
+            <path class="hippo__skin" d="M172 66
+              C180 40 222 32 250 36
+              C274 38 296 46 297 62
+              C298 74 290 82 276 84
+              C264 86 250 86 238 90
+              C236 124 254 148 280 146
+              C290 144 294 138 296 130
+              C302 154 284 176 256 178
+              C224 180 196 166 184 146
+              C172 126 164 92 172 66 Z"/>
+            <!-- face details -->
+            <circle class="hippo__accent" cx="212" cy="104" r="9" opacity="0.85"/>
+            <circle class="hippo__accent" cx="236" cy="62" r="11"/>
+            <circle class="hippo__eye" cx="236" cy="62" r="7.5"/>
+            <circle class="hippo__shine" cx="238.5" cy="59.5" r="2.5"/>
+            <ellipse class="hippo__eye" cx="285" cy="56" rx="4" ry="3"/>
+          </svg>
+
+          <!-- Overhead view (400px): head at the top, feet barely visible at the sides -->
+          <svg class="hippo__art hippo__art--top" viewBox="0 0 170 260" focusable="false">
+            <!-- feet (mostly hidden under the body) -->
+            <rect class="hippo__skin-dark" x="6" y="102" width="26" height="34" rx="12"/>
+            <rect class="hippo__skin-dark" x="138" y="102" width="26" height="34" rx="12"/>
+            <rect class="hippo__skin-dark" x="8" y="190" width="26" height="34" rx="12"/>
+            <rect class="hippo__skin-dark" x="136" y="190" width="26" height="34" rx="12"/>
+            <!-- toenails -->
+            <g class="hippo__accent">
+              <ellipse cx="12.5" cy="104" rx="3.4" ry="4.2"/><ellipse cx="19" cy="104" rx="3.4" ry="4.2"/><ellipse cx="25.5" cy="104" rx="3.4" ry="4.2"/>
+              <ellipse cx="157.5" cy="104" rx="3.4" ry="4.2"/><ellipse cx="151" cy="104" rx="3.4" ry="4.2"/><ellipse cx="144.5" cy="104" rx="3.4" ry="4.2"/>
+              <ellipse cx="14.5" cy="192" rx="3.4" ry="4.2"/><ellipse cx="21" cy="192" rx="3.4" ry="4.2"/><ellipse cx="27.5" cy="192" rx="3.4" ry="4.2"/>
+              <ellipse cx="155.5" cy="192" rx="3.4" ry="4.2"/><ellipse cx="149" cy="192" rx="3.4" ry="4.2"/><ellipse cx="142.5" cy="192" rx="3.4" ry="4.2"/>
+            </g>
+            <!-- tail + body -->
+            <ellipse class="hippo__skin" cx="85" cy="253" rx="7" ry="6"/>
+            <ellipse class="hippo__skin" cx="85" cy="160" rx="62" ry="90"/>
+            <!-- belly (darker area where caught balls show) -->
+            <ellipse class="hippo__skin-dark" cx="85" cy="170" rx="46" ry="62"/>
+            <!-- ears -->
+            <ellipse class="hippo__skin" cx="46" cy="88" rx="10" ry="13"/>
+            <ellipse class="hippo__accent" cx="46" cy="89" rx="5" ry="7"/>
+            <ellipse class="hippo__skin" cx="124" cy="88" rx="10" ry="13"/>
+            <ellipse class="hippo__accent" cx="124" cy="89" rx="5" ry="7"/>
+            <!-- head + wide snout -->
+            <ellipse class="hippo__skin" cx="85" cy="66" rx="44" ry="38"/>
+            <ellipse class="hippo__skin" cx="85" cy="34" rx="40" ry="26"/>
+            <!-- open mouth at the front: inside, tongue, two teeth -->
+            <ellipse class="hippo__mouth-fill" cx="85" cy="22" rx="28" ry="12"/>
+            <ellipse class="hippo__accent" cx="85" cy="28" rx="15" ry="5"/>
+            <rect class="hippo__tooth" x="64" y="8" width="9" height="14" rx="4.5"/>
+            <rect class="hippo__tooth" x="97" y="8" width="9" height="14" rx="4.5"/>
+            <!-- face details -->
+            <ellipse class="hippo__eye" cx="66" cy="46" rx="4.5" ry="3.2"/>
+            <ellipse class="hippo__eye" cx="104" cy="46" rx="4.5" ry="3.2"/>
+            <circle class="hippo__accent" cx="66" cy="82" r="6" opacity="0.85"/>
+            <circle class="hippo__accent" cx="104" cy="82" r="6" opacity="0.85"/>
+            <circle class="hippo__accent" cx="52" cy="66" r="9"/>
+            <circle class="hippo__eye" cx="52" cy="66" r="6"/>
+            <circle class="hippo__shine" cx="54" cy="64" r="2"/>
+            <circle class="hippo__accent" cx="118" cy="66" r="9"/>
+            <circle class="hippo__eye" cx="118" cy="66" r="6"/>
+            <circle class="hippo__shine" cx="120" cy="64" r="2"/>
+          </svg>
+
+          <!-- JS: invisible hit box over the mouth for collision checks -->
+          <span id="hippo-mouth" class="hippo__mouth"></span>
+
+          <!-- JS: append one .ball--collected here per ball caught -->
+          <div id="collected-balls" class="collected-balls"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+</div>
+</body>
+</html>
