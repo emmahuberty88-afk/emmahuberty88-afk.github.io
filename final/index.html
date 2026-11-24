@@ -821,7 +821,7 @@ startBtn.addEventListener('click', () => {
     nextBtn.disabled = false;
     deleteBtn.disabled = false;
 
-});
+
 
 if (!gameRunning){
 balls = [];
@@ -833,6 +833,7 @@ for (const ball of htmlballs) {
  window.addEventListener('keydown', keyPressed);
  gameRunning = true;
 }
+});
 
 loop();
 
