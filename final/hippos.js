@@ -20,8 +20,11 @@ const hippospeed = 10;
 startBtn.addEventListener('click', () => {
     nextBtn.disabled = false;
     deleteBtn.disabled = false;
+    window.addEventListener('keydown', keyPressed);
 
-    window.addEventListener("keydown", (event) => {
+});
+
+function keyPressed(event) {
 if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
     event.preventDefault();
   }
@@ -42,11 +45,9 @@ if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
   }
 
   // Apply the new coordinates
-  hippo.style.setProperty('--hippo-y',hippoy);
-  hippo.style.setProperty('--hippo-x',hippox);
-});
-
-});
+  hippo.style.setProperty('--hippo-y',hippoy + 'px');
+  hippo.style.setProperty('--hippo-x',hippox + 'px');
+};
 
 
 // function to generate random number
