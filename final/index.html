@@ -822,7 +822,6 @@ const inMouth = ballrect.right > hippomouthrect.left && ballrect.left < hippomou
 
 eat(){
 this.eaten = true;
-// const hippoReturnTimer = setTimeout(() => {}, 2000);
 hippo.classList.add("is-returning");
 this.ball.style.setProperty('--ball-x', 0);
 this.ball.style.setProperty('--ball-y', 0);
