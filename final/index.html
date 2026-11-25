@@ -761,7 +761,7 @@ if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
 
 // function to generate random number
 function random(min, max) {
-  Math.random() * (max - min) + min;
+  return Math.random() * (max - min) + min;
 }
 
 // class ball setup
@@ -776,9 +776,9 @@ class Ball {
     this.eaten = false;
 
     const areaRect = area.getBoundingClientRect();
-    const rect = el.getBoundingClientRect();
-    this.startLeft = rect.left = areaRect.left;
-    this.startUp = rect.left = areaRect.left;
+    const rect = ball.getBoundingClientRect();
+    this.startLeft = rect.left - areaRect.left;
+    this.startUp = rect.left - areaRect.left;
     this.size = rect.width;
   }
 
@@ -802,8 +802,8 @@ class Ball {
 
     this.x += this.velX;
     this.y += this.velY;
-    this.ball.style.setProperty('--ball-x'+this.x+'px');
-    this.ball.style.setProperty('--ball-y'+this.y+'px');
+    this.ball.style.setProperty('--ball-x', this.x+'px');
+    this.ball.style.setProperty('--ball-y', this.y+'px');
   }
 
   collisionDetect() {
@@ -825,6 +825,11 @@ class Ball {
 const balls = [];
 
 function loop (){
+  if (gameRunning){
+    for(const ball of balls){
+      ball.update();
+    }
+  }
 
   requestAnimationFrame(loop);
 }
@@ -837,7 +842,7 @@ startBtn.addEventListener('click', () => {
 
 
 if (!gameRunning){
-balls = [];
+balls.length = 0;
 const htmlballs = document.querySelectorAll('#ball-pit .ball');
 
 for (const ball of htmlballs) {
