@@ -757,6 +757,8 @@ if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
 }
 
 
+
+
 // function to generate random number
 function random(min, max) {
   Math.random() * (max - min) + min;
@@ -772,10 +774,17 @@ class Ball {
     this.velX = random(-2,2);
     this.velY = random(-2,2);
     this.eaten = false;
+
+    const areaRect = area.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    this.startLeft = rect.left = areaRect.left;
+    this.startUp = rect.left = areaRect.left;
+    this.size = rect.width;
   }
 
+
   update() {
-    if (this.x + this.size >= width) {
+    if (this.x + this.size >= areaRect.clientWidth) {
       this.velX = -this.velX;
     }
 
@@ -783,7 +792,7 @@ class Ball {
       this.velX = -this.velX;
     }
 
-    if (this.y + this.size >= height) {
+    if (this.y + this.size >= areaRect.clientHeight) {
       this.velY = -this.velY;
     }
 
@@ -814,6 +823,11 @@ class Ball {
 }
 
 const balls = [];
+
+function loop (){
+
+  requestAnimationFrame(loop);
+}
 
 
 startBtn.addEventListener('click', () => {
