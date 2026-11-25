@@ -807,9 +807,6 @@ class Ball {
   }
 
 checkIfInMouth(){
-//   Hippo belly ...... #collected-balls (append .ball--collected here;
-//                      clone #collected-ball-template)
-
 const hippomouthrect = hippoMouth.getBoundingClientRect();
 const ballrect = this.ball.getBoundingClientRect();
 
@@ -822,10 +819,6 @@ const inMouth = ballrect.right > hippomouthrect.left && ballrect.left < hippomou
 
 eat(){
 this.eaten = true;
-hippo.classList.add("is-returning");
- hippo.style.setProperty('--hippo-y',0);
- hippo.style.setProperty('--hippo-x',0);
-
 const templateStuff = collectedBallsTemplate.content;
 const ogBall = templateStuff.firstElementChild;
 const collectedBall = ogBall.cloneNode(true);
@@ -834,9 +827,17 @@ collectedBalls.appendChild(collectedBall);
 
 this.ball.remove();
 }
-
-
 }
+hippo.classList.add("is-returning");
+ hippo.style.setProperty('--hippo-y',0);
+ hippo.style.setProperty('--hippo-x',0);
+//  Digit slots ...... #phone-digits > .digit[data-index="0..9"]
+//                      - active slot gets class .is-active (+ aria-current="true")
+//                      - put the number in .digit__value
+//                      - update .digit__label for screen readers ("Digit 1: 5")
+
+// i need to make it so that when next is clicked, the eaten balls are reset and redrawn on the board. 
+// i also need to make sure that the number of balls in the slots are updating every time a ball is eaten. 
 
 const balls = [];
 
