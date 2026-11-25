@@ -778,11 +778,13 @@ class Ball {
     this.startLeft = rect.left - areaRect.left;
     this.startUp = rect.top - areaRect.top;
     this.size = rect.width;
+    this.areaWidth = areaRect.clientWidth;
+    this.areaHeight = areaRect.clientHeight;
   }
 
 
   update() {
-    if (this.x + this.size >= areaRect.clientWidth) {
+    if (this.x + this.size >= this.areaWidth) {
       this.velX = -this.velX;
     }
 
@@ -790,7 +792,7 @@ class Ball {
       this.velX = -this.velX;
     }
 
-    if (this.y + this.size >= areaRect.clientHeight) {
+    if (this.y + this.size >= this.areaHeight) {
       this.velY = -this.velY;
     }
 
