@@ -750,8 +750,7 @@ if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
       hippox += hippospeed;
       break;
   }
-
-  // Apply the new coordinates
+  // set the new coordinates of the hippo, so changing the property hippoy by adding hippoy number of px to it. 
   hippo.style.setProperty('--hippo-y',hippoy + 'px');
   hippo.style.setProperty('--hippo-x',hippox + 'px');
 }
@@ -764,8 +763,7 @@ function random(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-// class ball setup
-
+// class ball setup with methods to eat the balls and check if the balls are in the mouth and update the balls so hopefully they move. 
 class Ball {
   constructor(ball) {
     this.ball = ball;
@@ -809,12 +807,11 @@ class Ball {
 checkIfInMouth(){
 //   Hippo belly ...... #collected-balls (append .ball--collected here;
 //                      clone #collected-ball-template)
-//   Return to start .. add class .is-returning to #hippo, then set
-//                      --hippo-x / --hippo-y back to 0px (CSS animates it)
+
 const hippomouthrect = hippoMouth.getBoundingClientRect();
 const ballrect = this.ball.getBoundingClientRect();
 
-const inMouth = ballrect.right > hippomouthrect.left || ballrect.left < hippomouthrect.right || ballrect.bottom > hippomouthrect.top || ballrect.top > hippomouthrect.bottom ;
+const inMouth = ballrect.right > hippomouthrect.left && ballrect.left < hippomouthrect.right && ballrect.bottom > hippomouthrect.top && ballrect.top > hippomouthrect.bottom ;
 
         if (inMouth) {
           this.eat();
@@ -823,15 +820,16 @@ const inMouth = ballrect.right > hippomouthrect.left || ballrect.left < hippomou
 
 eat(){
 this.eaten = true;
-const hippoReturnTimer = setTimeout(() => {}, 2000);
+// const hippoReturnTimer = setTimeout(() => {}, 2000);
 hippo.classList.add("is-returning");
+this.ball.style.setProperty('--ball-x', 0);
+this.ball.style.setProperty('--ball-y', 0);
 
-if (collectedBallsTemplate){
 const templateStuff = collectedBallsTemplate.content;
-const ogBall = collectedBallsTemplate.firstElementChild;
+const ogBall = templateStuff.firstElementChild;
 const collectedBall = ogBall.cloneNode(true);
 collectedBalls.appendChild(collectedBall);
-}
+
 
 this.ball.remove();
 }
@@ -844,7 +842,11 @@ const balls = [];
 function loop (){
   if (gameRunning){
     for(const ball of balls){
+      if (!ball.eaten){
       ball.update();
+
+      ball.checkIfInMouth();
+      }
     }
   }
 
