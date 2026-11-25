@@ -805,21 +805,30 @@ class Ball {
     this.ball.style.setProperty('--ball-x', this.x+'px');
     this.ball.style.setProperty('--ball-y', this.y+'px');
   }
-
-  collisionDetect() {
-    for (const ball of balls) {
-      if (this !== ball) {
-        const dx = this.x - ball.x;
-        const dy = this.y - ball.y;
+checkIfInMouth(){
+// Hippo mouth ...... #hippo-mouth (invisible box: use getBoundingClientRect()
+//                      on it for collision checks)
+//   Hippo belly ...... #collected-balls (append .ball--collected here;
+//                      clone #collected-ball-template)
+//   Return to start .. add class .is-returning to #hippo, then set
+//                      --hippo-x / --hippo-y back to 0px (CSS animates it)
+const hippomouthrect = hippoMouth.getBoundingClientRect();
+const hippomouthsize = hippomouthrect.width;
+for (const ball of balls) {
+      if (hippomouthv !== ball) {
+        const dx = hippomouthrect.x - ball.x;
+        const dy = hippomouthrect.y - ball.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < this.size + ball.size) {
-          this.x = this.x*-1;
-          this.y = this.y*-1;
+        if (distance < hippomouthsize + ball.size) {
+          ball.eat();
         }
       }
     }
-  };
+}
+
+  
+
 }
 
 const balls = [];
