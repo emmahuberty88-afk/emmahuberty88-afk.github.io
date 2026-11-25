@@ -802,8 +802,8 @@ class Ball {
 
     this.x += this.velX;
     this.y += this.velY;
-    this.ball.style.setProperty('--ball-x', this.x+'px');
-    this.ball.style.setProperty('--ball-y', this.y+'px');
+    hippo.style.setProperty('--hippo-y',0);
+    hippo.style.setProperty('--hippo-x',0);
   }
 
 checkIfInMouth(){
@@ -823,8 +823,8 @@ const inMouth = ballrect.right > hippomouthrect.left && ballrect.left < hippomou
 eat(){
 this.eaten = true;
 hippo.classList.add("is-returning");
-this.ball.style.setProperty('--ball-x', 0);
-this.ball.style.setProperty('--ball-y', 0);
+this.hippo.style.setProperty('--ball-x', 0);
+this.hippo.style.setProperty('--ball-y', 0);
 
 const templateStuff = collectedBallsTemplate.content;
 const ogBall = templateStuff.firstElementChild;
