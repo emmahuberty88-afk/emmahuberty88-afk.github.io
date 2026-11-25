@@ -807,15 +807,10 @@ class Ball {
   }
 
 checkIfInMouth(){
-// Hippo mouth ...... #hippo-mouth (invisible box: use getBoundingClientRect()
-//                      on it for collision checks)
 //   Hippo belly ...... #collected-balls (append .ball--collected here;
 //                      clone #collected-ball-template)
 //   Return to start .. add class .is-returning to #hippo, then set
 //                      --hippo-x / --hippo-y back to 0px (CSS animates it)
-if (this.eaten) {
-  return;
-}
 const hippomouthrect = hippoMouth.getBoundingClientRect();
 const ballrect = this.ball.getBoundingClientRect();
 
@@ -826,7 +821,21 @@ const inMouth = ballrect.right > hippomouthrect.left || ballrect.left < hippomou
         }
 }
 
-  
+eat(){
+this.eaten = true;
+const hippoReturnTimer = setTimeout(() => {}, 2000);
+hippo.classList.add("is-returning");
+
+if (collectedBallsTemplate){
+const templateStuff = collectedBallsTemplate.content;
+const ogBall = collectedBallsTemplate.firstElementChild;
+const collectedBall = ogBall.cloneNode(true);
+collectedBalls.appendChild(collectedBall);
+}
+
+this.ball.remove();
+}
+
 
 }
 
