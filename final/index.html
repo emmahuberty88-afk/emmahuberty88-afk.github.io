@@ -719,7 +719,7 @@ const deleteBtn = document.getElementById('delete-btn');
 const area = document.getElementById('game-area');
 const hippoMouth = document.getElementById('hippo-mouth');
 const collectedBalls = document.getElementById('collected-balls');
-const collectedBallsTemplate = document.getElementById('collected-balls-template');
+const collectedBallsTemplate = document.getElementById('collected-ball-template');
 
 
 // hippo stuff 
@@ -776,7 +776,7 @@ class Ball {
     const areaRect = area.getBoundingClientRect();
     const rect = ball.getBoundingClientRect();
     this.startLeft = rect.left - areaRect.left;
-    this.startUp = rect.left - areaRect.left;
+    this.startUp = rect.top - areaRect.top;
     this.size = rect.width;
   }
 
@@ -811,7 +811,7 @@ checkIfInMouth(){
 const hippomouthrect = hippoMouth.getBoundingClientRect();
 const ballrect = this.ball.getBoundingClientRect();
 
-const inMouth = ballrect.right > hippomouthrect.left && ballrect.left < hippomouthrect.right && ballrect.bottom > hippomouthrect.top && ballrect.top > hippomouthrect.bottom ;
+const inMouth = ballrect.right > hippomouthrect.left && ballrect.left < hippomouthrect.right && ballrect.bottom > hippomouthrect.top && ballrect.top < hippomouthrect.bottom ;
 
         if (inMouth) {
           this.eat();
