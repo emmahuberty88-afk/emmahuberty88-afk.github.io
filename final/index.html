@@ -870,6 +870,19 @@ function loop (){
   requestAnimationFrame(loop);
 }
 
+const digits = document.querySelectorAll('#phone-digits > .digit');
+let currentDigit = 0;
+
+nextBtn.addEventListener('click', () => {
+   const activeDigit = document.getElementsByClassName('is-active');
+   const phoneDigitsArray = [];
+   for (const digit of phoneDigitsArray){
+    if (phoneDigitsArray[digit].classList.contains('is-active')) {
+
+   } 
+  }
+
+  });
 
 startBtn.addEventListener('click', () => {
     nextBtn.disabled = false;
