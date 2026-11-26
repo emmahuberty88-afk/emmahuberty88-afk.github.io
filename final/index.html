@@ -763,7 +763,14 @@ function random(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-// class ball setup with methods to eat the balls and check if the balls are in the mouth and update the balls so hopefully they move. 
+// class ball setup with methods to eat the balls and check if the balls are in the mouth and update the balls so hopefully they move. Balls ............ 26 .ball elements already sit inside #ball-pit at random - use inspo from other balls assingment in class. 
+                    //  spots. Each has its own start position:
+                    //    --m-left / --m-top  (percent, 400px layout)
+                    //    --d-left / --d-top  (percent, 1200px layout)
+                    //    --s                 (size multiplier)
+                    //  When Start is pressed, read each ball's position with
+                    //  getBoundingClientRect() and animate it with --ball-x / --ball-y.
+
 class Ball {
   constructor(ball) {
     this.ball = ball;
@@ -774,9 +781,10 @@ class Ball {
     this.eaten = false;
 
     const areaRect = area.getBoundingClientRect();
+    const ballPit = document.getElementById('ball-pit');
     const rect = ball.getBoundingClientRect();
-    this.startLeft = rect.left - areaRect.left;
-    this.startUp = rect.top - areaRect.top;
+    this.startLeft = rect.left - ballPit.left;
+    this.startUp = rect.top - ballPit.top;
     this.size = rect.width;
     this.areaWidth = areaRect.clientWidth;
     this.areaHeight = areaRect.clientHeight;
@@ -826,11 +834,18 @@ collectedBalls.appendChild(collectedBall);
 
 
 this.ball.remove();
+
+setTimeout(() => {
+hippoy = 0;
+hippox = 0;   
+
+ hippo.classList.add("is-returning");
+ hippo.style.setProperty('--hippo-y','0px');
+ hippo.style.setProperty('--hippo-x','0px');
+  }, 2000);
 }
 }
-hippo.classList.add("is-returning");
- hippo.style.setProperty('--hippo-y',0);
- hippo.style.setProperty('--hippo-x',0);
+
 //  Digit slots ...... #phone-digits > .digit[data-index="0..9"]
 //                      - active slot gets class .is-active (+ aria-current="true")
 //                      - put the number in .digit__value
