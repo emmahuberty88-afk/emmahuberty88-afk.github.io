@@ -870,17 +870,22 @@ function loop (){
   requestAnimationFrame(loop);
 }
 
-const digits = document.querySelectorAll('#phone-digits > .digit');
+
 let currentDigit = 0;
 
 nextBtn.addEventListener('click', () => {
    const activeDigit = document.getElementsByClassName('is-active');
-   const phoneDigitsArray = [];
-   for (const digit of phoneDigitsArray){
-    if (phoneDigitsArray[digit].classList.contains('is-active')) {
+   const thisSlot = digits[currentDigit];
+   const numBallsCollected = collectedBalls.children.length;
 
-   } 
-  }
+  thisSlot.querySelector('.digit__value').textContent = numBallsCollected;
+  thisSlot.classList.remove('is-active');
+
+
+   currentDigits++;
+   if (currentDigit < digits.length){
+    currentDigit.classList.add('is-active');
+   }
 
   });
 
