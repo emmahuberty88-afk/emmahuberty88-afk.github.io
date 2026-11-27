@@ -862,8 +862,11 @@ const ogBall = templateStuff.firstElementChild;
 const collectedBall = ogBall.cloneNode(true);
 collectedBalls.appendChild(collectedBall);
 
+document.getElementById('ball-pit').appendChild(newBall); 
+
 
 this.ball.remove();
+balls.push(new Ball(newBall));
 
 setTimeout(() => {
 hippoy = 0;
