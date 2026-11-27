@@ -775,10 +775,21 @@ nextBtn.addEventListener('click', () => {
    if (currentDigit < digits.length){
     digits[currentDigit].classList.add('is-active');
    }
-   collectedBalls.innerHtml = ' ';
-   collectedBalls.children.length = 0
+   collectedBalls.innerHTML = ' ';
   });
 
+// delete one ball from the digits and the hippo's belly when clicked. if you get to 0, go back a digit. (maybe)
+  deleteBtn.addEventListener('click', () => {
+   const thisSlot = digits[currentDigit];
+   thisSlot.querySelector('.digit__value').textContent = numBallsCollected();
+
+  currentDigit--;
+  if (thisSlot<1){
+  thisSlot.classList.remove('is-active');
+  }
+
+   collectedBalls.children.length = 0;
+  });
 
 
 
@@ -860,8 +871,8 @@ hippox = 0;
  hippo.classList.add("is-returning");
  hippo.style.setProperty('--hippo-y','0px');
  hippo.style.setProperty('--hippo-x','0px');
+ setTimeout(() => hippo.classList.remove('is-returning'), 900);
   }, 2000);
-hippo.classList.remove('is-returning')
 
 }
 }
