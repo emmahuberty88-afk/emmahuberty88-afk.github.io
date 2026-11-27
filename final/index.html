@@ -770,12 +770,17 @@ nextBtn.addEventListener('click', () => {
   thisSlot.querySelector('.digit__value').textContent = numBallsCollected();
   thisSlot.classList.remove('is-active');
 
+   collectedBalls.innerHTML = ' ';
 
-   currentDigit++;
+     for (const ball of balls) {
+    ball.eaten = false;
+  }
+
+     currentDigit++;
    if (currentDigit < digits.length){
     digits[currentDigit].classList.add('is-active');
    }
-   collectedBalls.innerHTML = ' ';
+
   });
 
 // delete one ball from the digits and the hippo's belly when clicked. if you get to 0, go back a digit. (maybe)
@@ -830,11 +835,11 @@ class Ball {
       this.velX = -this.velX;
     }
 
-    if (this.startUp -  this.y + this.size >= this.areaHeight) {
+    if (this.startUp + this.y + this.size >= this.areaHeight) {
       this.velY = -this.velY;
     }
 
-    if (this.startUp - this.y - this.size <= 0) {
+    if (this.startUp + this.y - this.size <= 0) {
       this.velY = -this.velY;
     }
 
@@ -862,11 +867,11 @@ const ogBall = templateStuff.firstElementChild;
 const collectedBall = ogBall.cloneNode(true);
 collectedBalls.appendChild(collectedBall);
 
-document.getElementById('ball-pit').appendChild(newBall); 
+// document.getElementById('ball-pit').appendChild(newBall); 
 
 
 this.ball.remove();
-balls.push(new Ball(newBall));
+// balls.push(new Ball(newBall));
 
 setTimeout(() => {
 hippoy = 0;
