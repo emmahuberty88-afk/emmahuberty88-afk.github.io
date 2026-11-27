@@ -709,7 +709,7 @@ body {
   </main>
 
 </div>
-________________________________________________________ emma's js section ____________________________________________________________________________________
+<!---------------------------------------------------------- emma's js section ------------------------------------------------------------------>
 <script>
 
 // top bar button elements and other variable settups
@@ -720,6 +720,8 @@ const area = document.getElementById('game-area');
 const hippoMouth = document.getElementById('hippo-mouth');
 const collectedBalls = document.getElementById('collected-balls');
 const collectedBallsTemplate = document.getElementById('collected-ball-template');
+const digits = document.querySelectorAll('#phone-digits > .digit');
+
 
 
 // hippo stuff 
@@ -755,22 +757,26 @@ if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
   hippo.style.setProperty('--hippo-x',hippox + 'px');
 }
 // changing the digit number when next is clicked based on the number of balls in hippo belly. 
+// get the number of balls in the hippo belly 
+function numBallsCollected (){
+ return collectedBalls.children.length;
+}  
+
 let currentDigit = 0;
 
 nextBtn.addEventListener('click', () => {
-   const activeDigit = document.getElementsByClassName('is-active');
    const thisSlot = digits[currentDigit];
-   const numBallsCollected = collectedBalls.children.length;
 
-  thisSlot.querySelector('.digit__value').textContent = numBallsCollected;
+  thisSlot.querySelector('.digit__value').textContent = numBallsCollected();
   thisSlot.classList.remove('is-active');
 
 
-   currentDigits++;
+   currentDigit++;
    if (currentDigit < digits.length){
-    currentDigit.classList.add('is-active');
+    digits[currentDigit].classList.add('is-active');
    }
-
+   collectedBalls.innerHtml = ' ';
+   collectedBalls.children.length = 0
   });
 
 
@@ -832,7 +838,7 @@ const ballrect = this.ball.getBoundingClientRect();
 
 const inMouth = ballrect.right > hippomouthrect.left && ballrect.left < hippomouthrect.right && ballrect.bottom > hippomouthrect.top && ballrect.top < hippomouthrect.bottom ;
 
-        if (inMouth) {
+        if (inMouth && numBallsCollected()< 9) {
           this.eat();
         }
 }
@@ -855,6 +861,8 @@ hippox = 0;
  hippo.style.setProperty('--hippo-y','0px');
  hippo.style.setProperty('--hippo-x','0px');
   }, 2000);
+hippo.classList.remove('is-returning')
+
 }
 }
 
