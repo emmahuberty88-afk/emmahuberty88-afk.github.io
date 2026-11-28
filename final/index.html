@@ -778,7 +778,7 @@ nextBtn.addEventListener('click', () => {
 
      currentDigit++;
    if (currentDigit < digits.length){
-    thisSlot.classList.add('is-active');
+    digits[currentDigit].classList.add('is-active');
    }
 
   });
@@ -788,15 +788,27 @@ nextBtn.addEventListener('click', () => {
    const thisSlot = digits[currentDigit];
    const lastSlot = digits[currentDigit - 1];
    const slotValue = thisSlot.querySelector('.digit__value').textContent;
+   const lastSlotValue = lastSlot.querySelector('.digit__value').textContent;
+    slotValue = numBallsCollected();
 
-   slotValue = numBallsCollected();
-
-  if (slotValue>=0 && collectedBalls.innerHTML !== ' '){
-  currentDigit--;
-  if (slotValue = 0){
-    lastSlot.classList.add('is-active');
+    if (currentDigit < 0){
+    return;
   }
 
+   if (currentDigit < digits.length){
+    digits[currentDigit].classList.remove('is-active');
+   }
+
+  currentDigit--;
+
+  if (slotValue = 0){
+    lastSlot.classList.add('is-active');
+    let newLastSlotValue = Number(lastSlotValue);
+    let nnewLastSlotValue = newLastSlotValue - 1;
+
+
+    lastSlotValue = nnewLastSlotValue; 
+  
   }
  
   });
