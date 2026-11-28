@@ -789,23 +789,38 @@ nextBtn.addEventListener('click', () => {
     const lastSlotValue = lastSlot.querySelector('.digit__value').textContent;
 
     if (collectedBalls() >0){
-      // the stuff for removing the balls from the hippo belly in one sec. 
 
-    }else {
+    collectedBalls.lastElementChild.remove();
 
-    if (currentDigit < 0){
+    const firstCaughtBall = findCaughtBalls(); 
+
+    function findCaughtBalls(ball) {
+     const firstBallFound = balls.find(function(ball) {
+    return ball.eaten === true;
+  });
+    return firstBallFound;
+    }
+
+    if (firstCaughtBall) {
+      firstCaughtBall.eaten = false;
+    }
+
+    } else {
+
+    if (currentDigit <= 0){
     return;
   }
-
     currentDigit--;
     let newLastSlotValue = Number(lastSlotValue);
+    if (newLastSlotValue >=0){
     newLastSlotValue--;
     lastSlotValue = newLastSlotValue; 
-    lastSlot.classList.add('is-active');
+    }
 
      if (currentDigit < digits.length){
     digits[currentDigit].classList.remove('is-active');
    }
+   lastSlot.classList.add('is-active');
 
     }
   });
@@ -938,6 +953,3 @@ loop();
 </script>
 </body>
 </html>
-// TO DO: make delete button work 
-//        add some sort of signal to submit your phone number, or tell you when it's completed
-//.       game stop state maybe? on game stop, make all balls stop, and hippo grow in scale or smth 
