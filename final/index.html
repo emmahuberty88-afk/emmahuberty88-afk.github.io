@@ -785,32 +785,29 @@ nextBtn.addEventListener('click', () => {
 
 // delete one ball from the digits and the hippo's belly when clicked. if you get to 0, go back a digit. (maybe)
   deleteBtn.addEventListener('click', () => {
-   const thisSlot = digits[currentDigit];
-   const lastSlot = digits[currentDigit - 1];
-   const slotValue = thisSlot.querySelector('.digit__value').textContent;
-   const lastSlotValue = lastSlot.querySelector('.digit__value').textContent;
-    slotValue = numBallsCollected();
+    const lastSlot = digits[currentDigit];
+    const lastSlotValue = lastSlot.querySelector('.digit__value').textContent;
+
+    if (collectedBalls() >0){
+      // the stuff for removing the balls from the hippo belly in one sec. 
+
+    }else {
 
     if (currentDigit < 0){
     return;
   }
 
-   if (currentDigit < digits.length){
+    currentDigit--;
+    let newLastSlotValue = Number(lastSlotValue);
+    newLastSlotValue--;
+    lastSlotValue = newLastSlotValue; 
+    lastSlot.classList.add('is-active');
+
+     if (currentDigit < digits.length){
     digits[currentDigit].classList.remove('is-active');
    }
 
-  currentDigit--;
-
-  if (slotValue = 0){
-    lastSlot.classList.add('is-active');
-    let newLastSlotValue = Number(lastSlotValue);
-    let nnewLastSlotValue = newLastSlotValue - 1;
-
-
-    lastSlotValue = nnewLastSlotValue; 
-  
-  }
- 
+    }
   });
 
 
